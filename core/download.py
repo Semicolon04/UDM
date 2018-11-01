@@ -1,9 +1,8 @@
 from pathlib import Path
+from os.path import join, basename
+from urllib.request import urlopen, Request
 
-import os
-import requests
-
-homepath = os.getcwd()+ "/files"
+default_download_path = join(Path.home(), 'Downloads')
 
 STATE_PAUSED = 0
 STATE_DOWNLOADING = 1
@@ -11,17 +10,24 @@ STATE_COMPLETED = 2
 STATE_ERROR = 3
 
 class Download:
-    def __init__(self, url, directory=homepath, filename=None):
-        self.url = url
-        self.directory = directory
-        self.filename = filename if filename else os.path.basename(url)
-        self.total_byes = self._get_size()
+    def __init__(self, url, directory=None, filename=None):
+        self.source_url = url
+        self.directory = directory if directory else default_download_path
+        self.filename = filename if filename else basename(url)
+        self.total_bytes = self._get_size()
         self.bytes_downloaded = 0
         self.state = STATE_PAUSED
         self.dir_fd = os.open(self.directory, os.O_RDONLY)
 
+    def __str__(self):
+        return 'Download from %s to %s' % (self.source_url, self.get_destination_path())
+
     def _get_size(self):
-        pass
+        request_to_send = Request(self.source_url, method='HEAD')
+        return response.getheader('Content-Length')
+    
+    def get_destination_path(self):
+        return join(self.directory, self.filename)
 
     def opener(self, path, flags):
         return os.open(path, flags, dir_fd=self.dir_fd)
